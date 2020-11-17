@@ -1,5 +1,6 @@
 package com.aequilibrium.transformers.app.resources;
 
+import com.aequilibrium.transformers.domain.model.Transformers;
 import com.aequilibrium.transformers.representation.request.BattleRequest;
 import com.aequilibrium.transformers.representation.request.CreateTransformersRequest;
 import com.aequilibrium.transformers.representation.request.UpdateTransformerRequest;
@@ -11,22 +12,23 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @Api(value = "Transformers Service")
 public interface TransformersResource {
 
     /**
      *
-     * @param id of the transformer
      * @return Transformer attributes
      */
-    @ApiOperation(value = "Get Transformers description", response = TransformersResponse.class)
+    @ApiOperation(value = "Get all Transformers")
     @ApiResponses({
             @ApiResponse(code = 200, message = "ok"),
             @ApiResponse(code = 404, message = "Not found"),
             @ApiResponse(code = 500, message = "Internal server error")
     })
     @GetMapping(value = "/transformers")
-    TransformersResponse getTransformerById(@RequestParam("id") String id);
+    List<Transformers> getTransformers();
 
     /**
      *

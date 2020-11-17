@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 
 import static com.aequilibrium.transformers.utils.Constants.*;
 
@@ -28,6 +29,17 @@ import static com.aequilibrium.transformers.utils.Constants.*;
 public class TransformersServiceImpl implements TransformersService {
     private final TransformersBuilder builder;
     private final TransformersRepository repository;
+
+    private int battles = 0;
+    private int winsAutobots = 0;
+    private int winsDecepticons = 0;
+
+    private ArrayList<Transformers> autobots = new ArrayList<>();
+    private ArrayList<Transformers> decepticons = new ArrayList<>();
+
+    private ArrayList<Survivors> autobotsSurvivorsList = new ArrayList<>();
+    private ArrayList<Survivors> decepticonsSurvivorsList = new ArrayList<>();
+
     @Override
     public TransformersResponse createTransformer(CreateTransformersRequest request) {
         log.info("Saving Transformer {}", request.getName());
@@ -49,7 +61,7 @@ public class TransformersServiceImpl implements TransformersService {
     public TransformersResponse updateTransformer(UpdateTransformerRequest request) {
         log.info("Updating transformer {}", request.getName());
         TransformersResponse response = new TransformersResponse();
-        Transformers transformers = repository.findByName(request.getName());
+        Transformers transformers = repository.findByName(request.getName().toUpperCase());
         if(transformers == null){
             log.error("Transformer Not found");
             throw new NotFoundException(TRANSFORMER_NOT_FOUND);
@@ -72,6 +84,9 @@ public class TransformersServiceImpl implements TransformersService {
         log.info("Deleting  transformer {}", name);
         TransformersResponse response = new TransformersResponse();
         Transformers transformers = repository.findByName(name);
+        if(transformers == null){
+            throw new NotFoundException(TRANSFORMER_NOT_FOUND);
+        }
         try {
             repository.delete(transformers);
             response.setMessage(DELETE_SUCCESS);
@@ -80,26 +95,62 @@ public class TransformersServiceImpl implements TransformersService {
             log.error(e.getMessage());
             throw new TransactionException(ERROR_MESSAGE);
         }
-        return null;
+        return response;
     }
 
     @Override
     public BattleResponse battle(BattleRequest request) {
-        BattleResponse response = new BattleResponse();
-        int battles = 0;
-        int winsAutobots = 0;
-        int winsDecepticons = 0;
+        sortRequest(request);
+        for(int i=0; i< decepticons.size(); i++){
+            if(decepticons.get(i).getName().equals(PREDA_KING) && autobots.get(i).getName().equals(OPTIMUS_PRIME)){
+                throw new ValidationException(GODS_FIGHT);
+            }else if (autobots.get(i).getName().equals(OPTIMUS_PRIME)){
+                winsAutobots(decepticons.get(i),i);
+                break;
+            }else if (decepticons.get(i).getName().equals(PREDA_KING)){
+                winsDecepticons(autobots.get(i),i);
+                break;
+            }
+            if(decepticons.get(i).getSkill() >= autobots.get(i).getSkill() + 3){
+                winsDecepticons(autobots.get(i),i);
+                break;
+            }else if(decepticons.get(i).getSkill().equals(autobots.get(i).getSkill())){
+                battles ++;
+            }else if(decepticons.get(i).getSkill() +3 >= autobots.get(i).getSkill()){
+                winsAutobots(decepticons.get(i),i);
+                break;
+            }
+            if(decepticons.get(i).getCourage() >= autobots.get(i).getCourage() + 4 &&
+                    decepticons.get(i).getStrength() >= autobots.get(i).getStrength() + 3){
+                winsDecepticons(autobots.get(i),i);
+                break;
 
-        ArrayList<Transformers> autobots = new ArrayList<>();
-        ArrayList<Transformers> decepticons = new ArrayList<>();
+            }else if(decepticons.get(i).getCourage() + 4 >= autobots.get(i).getCourage() &&
+                    decepticons.get(i).getStrength() + 3 >= autobots.get(i).getStrength()){
+                winsAutobots(decepticons.get(i),i);
+                break;
+            }
+        }
+        BattleResponse response = buildResponse();
+        freeMemory();
+        return response;
+    }
 
-        ArrayList<Survivors> autobotsSurvivorsList = new ArrayList<>();
-        ArrayList<Survivors> decepticonsSurvivorsList = new ArrayList<>();
+    @Override
+    public List<Transformers> getTransformers() {
+        log.info("Obtaining all transformers");
+        return repository.findAll();
+    }
 
-
+    private void sortRequest(BattleRequest request){
         request.getTransformers().forEach(p ->{
             Transformers transformers = builder.buildTransformers(p);
-            repository.save(transformers);
+            try {
+                repository.save(transformers);
+            }catch (Exception e){
+                log.error(e.getMessage());
+                throw new TransactionException(ERROR_MESSAGE);
+            }
             if(p.getFaction().equals(AUTOBOTS)){
                 autobots.add(transformers);
             }else{
@@ -114,50 +165,25 @@ public class TransformersServiceImpl implements TransformersService {
         if(autobots.isEmpty() || decepticons.isEmpty()){
             throw new ValidationException("There Where no battles");
         }
-        for(int i=0; i< decepticons.size(); i++){
-            if(decepticons.get(i).getName().equals(PREDA_KING)){
-                winsDecepticons ++;
-                battles ++;
-                autobots.remove(i);
-                break;
+    }
+    private void winsAutobots(Transformers decepticonsModel,int i){
+        winsAutobots ++;
+        battles ++;
+        decepticons.remove(i);
+        decepticonsModel.setAlive(true);
+        repository.save(decepticonsModel);
+    }
+    
+    private void winsDecepticons(Transformers autobotsModel,int i){
+        winsDecepticons ++;
+        battles ++;
+        autobots.remove(i);
+        autobotsModel.setAlive(true);
+        repository.save(autobotsModel);
+    }
 
-            }else if (autobots.get(i).getName().equals(OPTIMUS_PRIME)){
-                winsAutobots ++;
-                battles ++;
-                decepticons.remove(i);
-                break;
-            }else if (decepticons.get(i).getName().equals(PREDA_KING) && autobots.get(i).getName().equals(OPTIMUS_PRIME)){
-                throw new ValidationException("Gods Delete");
-            }
-
-            if(decepticons.get(i).getSkill() >= autobots.get(i).getSkill() + 3){
-                winsDecepticons ++;
-                battles ++;
-                autobots.remove(i);
-                break;
-            }else if(decepticons.get(i).getSkill().equals(autobots.get(i).getSkill())){
-                battles ++;
-            }else if(decepticons.get(i).getSkill() +3 >= autobots.get(i).getSkill()){
-                winsAutobots ++;
-                battles ++;
-                decepticons.remove(i);
-                break;
-            }
-            if(decepticons.get(i).getCourage() >= autobots.get(i).getCourage() + 4 &&
-                    decepticons.get(i).getStrength() >= autobots.get(i).getStrength() + 3){
-                winsDecepticons ++;
-                battles ++;
-                autobots.remove(i);
-                break;
-
-            }else if(decepticons.get(i).getCourage() + 4 >= autobots.get(i).getCourage() &&
-                    decepticons.get(i).getStrength() + 3 >= autobots.get(i).getStrength()){
-                winsAutobots ++;
-                battles ++;
-                decepticons.remove(i);
-                break;
-            }
-        }
+    private BattleResponse buildResponse(){
+        BattleResponse response = new BattleResponse();
         response.setBattles(battles);
         if(winsAutobots > winsDecepticons){
             response.setWinner(AUTOBOTS);
@@ -178,8 +204,15 @@ public class TransformersServiceImpl implements TransformersService {
         });
         response.setSurvivorsAutobots(autobotsSurvivorsList);
         response.setSurvivorsDecepticons(decepticonsSurvivorsList);
-
         return response;
     }
-
+    private void freeMemory(){
+        battles = 0;
+        winsAutobots = 0;
+        winsDecepticons = 0;
+        autobots = new ArrayList<>();
+        decepticons = new ArrayList<>();
+        autobotsSurvivorsList = new ArrayList<>();
+        decepticonsSurvivorsList = new ArrayList<>();
+    }
 }

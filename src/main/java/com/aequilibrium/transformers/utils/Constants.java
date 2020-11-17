@@ -9,4 +9,5 @@ public class Constants {
     public static final String  DELETE_SUCCESS = "Transformers deleted successfully";
     public static final String  ERROR_MESSAGE = "There was an error saving transformers";
     public static final String  TRANSFORMER_NOT_FOUND = "There are no transformer with that name";
+    public static final String GODS_FIGHT = "Preda king and Optimus Fight competition is over";
 }

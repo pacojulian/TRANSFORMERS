@@ -12,10 +12,6 @@ import javax.persistence.*;
 public class Transformers {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "ID_TRANSFORMER")
-    private Integer idTransformer;
-
     @Column(name = "NAME")
     private String name;
 
@@ -45,4 +41,8 @@ public class Transformers {
 
     @Column(name = "SKILL")
     private Integer skill;
+
+    @Column(name = "IS_ALIVE")
+    private boolean isAlive;
+
 }

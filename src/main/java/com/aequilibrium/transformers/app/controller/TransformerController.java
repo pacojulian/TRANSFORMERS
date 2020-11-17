@@ -2,6 +2,7 @@ package com.aequilibrium.transformers.app.controller;
 
 import com.aequilibrium.transformers.app.resources.TransformersResource;
 import com.aequilibrium.transformers.app.services.TransformersService;
+import com.aequilibrium.transformers.domain.model.Transformers;
 import com.aequilibrium.transformers.representation.request.BattleRequest;
 import com.aequilibrium.transformers.representation.request.CreateTransformersRequest;
 import com.aequilibrium.transformers.representation.request.UpdateTransformerRequest;
@@ -10,13 +11,15 @@ import com.aequilibrium.transformers.representation.response.TransformersRespons
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 public class TransformerController implements TransformersResource {
     private final TransformersService service;
     @Override
-    public TransformersResponse getTransformerById(String id) {
-        return null;
+    public List<Transformers> getTransformers() {
+        return service.getTransformers();
     }
 
     @Override

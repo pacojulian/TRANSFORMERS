@@ -19,6 +19,7 @@ public class TransformersBuilder {
         transformers.setName(request.getName());
         transformers.setRank(request.getRank());
         transformers.setFaction(request.getFaction().toUpperCase());
+        transformers.setAlive(true);
         return transformers;
     }
 

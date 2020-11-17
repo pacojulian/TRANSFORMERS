@@ -1,10 +1,13 @@
 package com.aequilibrium.transformers.app.services;
 
+import com.aequilibrium.transformers.domain.model.Transformers;
 import com.aequilibrium.transformers.representation.request.BattleRequest;
 import com.aequilibrium.transformers.representation.request.CreateTransformersRequest;
 import com.aequilibrium.transformers.representation.request.UpdateTransformerRequest;
 import com.aequilibrium.transformers.representation.response.BattleResponse;
 import com.aequilibrium.transformers.representation.response.TransformersResponse;
+
+import java.util.List;
 
 public interface TransformersService {
 
@@ -34,4 +37,10 @@ public interface TransformersService {
      * @return battle status.
      */
     BattleResponse battle(BattleRequest request);
+
+    /**
+     *
+     * @return all the transformers
+     */
+    List<Transformers> getTransformers();
 }
